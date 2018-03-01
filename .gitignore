@@ -1,0 +1,4 @@
+
+/target/
+**/*.rs.bk
+/enwiki-latest-abstract.xml.gz
