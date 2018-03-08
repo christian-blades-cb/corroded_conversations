@@ -6,3 +6,8 @@ authors = ["Christian Blades <cblades@pindrop.com>"]
 [dependencies]
 xml-rs = "0.7.0"
 flate2 = "1.0.1"
+bzip2 = "0.3.2"
+slog = "2.1.1"
+slog-term = "2.3.0"
+lazy_static = "1.0.0"
+nom = "3.2.1"
