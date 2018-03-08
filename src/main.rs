@@ -16,7 +16,7 @@ use bzip2::bufread::BzDecoder;
 use std::env::args;
 use slog::*;
 use xml::name::OwnedName;
-use nom::{alphanumeric, whitespace};
+// use nom::{alphanumeric, whitespace};
 
 use xml::reader::{EventReader, XmlEvent};
 
@@ -84,6 +84,7 @@ fn do_in_page(
             ..
         }) => {
             if elem_name == "page" {
+                // exiting the page element, output the article
                 debug!(LOG, "article"; "title" => &article.title, "text" => &article.text);
                 *state = WikiState::WaitingForPage;
             }
@@ -204,10 +205,10 @@ fn main() {
 //        )
 // );
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(words<&[u8], &[u8]>,
-       take_while!(not_a_delim)
-);
+// #[cfg_attr(rustfmt, rustfmt_skip)]
+// named!(words<&[u8], &[u8]>,
+//        take_while!(not_a_delim)
+// );
 
 fn not_a_delim(chr: u8) -> bool {
     if chr == '|' as u8 || chr == ']' as u8 {
@@ -255,6 +256,6 @@ mod test {
             println!("{}", std::str::from_utf8(&x).unwrap());
         }
 
-        assert!(false);
+        assert!(false); // intentionally fail the test so we can see the println output
     }
 }

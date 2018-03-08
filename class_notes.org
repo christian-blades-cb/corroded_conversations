@@ -6,3 +6,7 @@
   - xml parser https://crates.io/crates/xml-rs
   - Wikipedia abstracts: https://dumps.wikimedia.org/enwiki/enwiki-latest-abstract.xml.gz
   - Links to wikipedia dumps: https://dumps.wikimedia.org/backup-index.html
+* <2018-03-08 Thu>
+  - slog - structure log https://docs.rs/slog/2.1.1/slog/
+  - lazy_static - lazily initialize staics in rust https://docs.rs/lazy_static/1.0.0/lazy_static/
+  - nom - zero-copy parsing - http://rust.unhandledexpression.com/nom/
