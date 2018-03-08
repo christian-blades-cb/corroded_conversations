@@ -179,30 +179,30 @@ fn main() {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    link,
-    delimited!(
-        tag!("[["),
-        do_parse!(
-            link: words >>
-            opt!(description) >>
-            link
-        ),
-        tag!("]]")
-    )
-);
+// #[cfg_attr(rustfmt, rustfmt_skip)]
+// named!(
+//     link,
+//     delimited!(
+//         tag!("[["),
+//         do_parse!(
+//             link: words >>
+//             opt!(description) >>
+//             link
+//         ),
+//         tag!("]]")
+//     )
+// );
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(description<&[u8], Vec<&[u8]>>,
-       do_parse!(
-           tag!("|") >>
-           descr: many1!(
-                   alt!(words | link)
-           ) >>
-           (descr)
-       )
-);
+// #[cfg_attr(rustfmt, rustfmt_skip)]
+// named!(description<&[u8], Vec<&[u8]>>,
+//        do_parse!(
+//            tag!("|") >>
+//            descr: many1!(
+//                    alt!(words | link)
+//            ) >>
+//            (descr)
+//        )
+// );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(words<&[u8], &[u8]>,
@@ -217,6 +217,24 @@ fn not_a_delim(chr: u8) -> bool {
     }
 }
 
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(shaes_hack,
+       do_parse!(
+           tag!("[[") >>
+           linkname: take_while!(not_a_delim) >>
+           alt!(tag!("|") | tag!("]]")) >>    
+           (linkname)
+       )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(collect_em_all<&[u8], Vec<&[u8]>>,
+       fold_many1!(shaes_hack, Vec::new(), | mut acc: Vec<_>, item | {
+           acc.push(item);
+           acc
+       })
+);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -224,9 +242,19 @@ mod test {
     #[test]
     fn parses_links() {
         let input = b"[[File:Tizi Ouzou Tasdawit.jpg|thumb|Signs in the [[University of Tizi Ouzou]] in three languages: [[Arabic]], [[Berber languages|Berber]], and French]]";
-        let (_, val) = link(input).unwrap();
+        let (rest, val) = shaes_hack(input).unwrap();
+        // println!("{}", std::str::from_utf8(&val).unwrap());
+        let expected = b"File:Tizi Ouzou Tasdawit.jpg";
+        let expected_rest = b"thumb|Signs in the [[University of Tizi Ouzou]] in three languages: [[Arabic]], [[Berber languages|Berber]], and French]]";
 
-        let expected = b"File:Tizi Ouzou Tasdawit.jpg|thumb|Signs in the [[University of Tizi Ouzou]] in three languages: [[Arabic]], [[Berber languages|Berber]], and French";
         assert_eq!(val[..], expected[..]);
+        assert_eq!(rest[..], expected_rest[..]);
+
+        let (_, val) = collect_em_all(input).unwrap();
+        for x in val {
+            println!("{}", std::str::from_utf8(&x).unwrap());
+        }
+
+        assert!(false);
     }
 }
