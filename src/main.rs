@@ -229,8 +229,17 @@ named!(shaes_hack,
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
+named!(lenient,
+       do_parse!(
+           take_until!("[[") >>
+           content: shaes_hack >>
+           (content)
+       )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
 named!(collect_em_all<&[u8], Vec<&[u8]>>,
-       fold_many1!(shaes_hack, Vec::new(), | mut acc: Vec<_>, item | {
+       fold_many1!(lenient, Vec::new(), | mut acc: Vec<_>, item | {
            acc.push(item);
            acc
        })
@@ -252,10 +261,18 @@ mod test {
         assert_eq!(rest[..], expected_rest[..]);
 
         let (_, val) = collect_em_all(input).unwrap();
-        for x in val {
-            println!("{}", std::str::from_utf8(&x).unwrap());
-        }
+        // for x in val {
+        //     println!("{}", std::str::from_utf8(&x).unwrap());
+        // }
 
-        assert!(false); // intentionally fail the test so we can see the println output
+        let expected = vec![
+            "File:Tizi Ouzou Tasdawit.jpg",
+            "University of Tizi Ouzou",
+            "Arabic",
+            "Berber languages",
+        ];
+        let expected: Vec<&[u8]> = expected.iter().map(|v| v.as_bytes()).collect();
+
+        assert_eq!(val[..], expected[..]);
     }
 }
