@@ -38,6 +38,7 @@ enum WikiState {
 #[derive(Debug)]
 struct Article {
     title: String,
+    links: Vec<String>,
     text: String,
 }
 
@@ -61,6 +62,7 @@ fn do_wait_for_page(
                 *article = Article {
                     title: String::new(),
                     text: String::new(),
+                    links: Vec::new(),
                 };
             }
         }
@@ -85,7 +87,7 @@ fn do_in_page(
         }) => {
             if elem_name == "page" {
                 // exiting the page element, output the article
-                debug!(LOG, "article"; "title" => &article.title, "text" => &article.text);
+                debug!(LOG, "article"; "title" => &article.title, "text" => &article.links.join("|"));
                 *state = WikiState::WaitingForPage;
             }
         }
@@ -148,6 +150,14 @@ fn do_in_text(
         }
         Ok(XmlEvent::Characters(text)) => {
             // trace!(LOG, "found characters for article text"; "text" => &text);
+            let links = collect_em_all(&text.as_bytes());
+            if let nom::IResult::Done(_, links) = links {
+                for &l in links.iter() {
+                    if let Ok(s) = String::from_utf8(l.into()) {
+                        article.links.push(s);
+                    }
+                }
+            }
             article.text.push_str(&text)
         }
         _ => {}
@@ -169,6 +179,7 @@ fn main() {
     let mut current_article = Article {
         title: String::new(),
         text: String::new(),
+        links: Vec::new(),
     };
     for e in parser {
         match state {
@@ -179,36 +190,6 @@ fn main() {
         }
     }
 }
-
-// #[cfg_attr(rustfmt, rustfmt_skip)]
-// named!(
-//     link,
-//     delimited!(
-//         tag!("[["),
-//         do_parse!(
-//             link: words >>
-//             opt!(description) >>
-//             link
-//         ),
-//         tag!("]]")
-//     )
-// );
-
-// #[cfg_attr(rustfmt, rustfmt_skip)]
-// named!(description<&[u8], Vec<&[u8]>>,
-//        do_parse!(
-//            tag!("|") >>
-//            descr: many1!(
-//                    alt!(words | link)
-//            ) >>
-//            (descr)
-//        )
-// );
-
-// #[cfg_attr(rustfmt, rustfmt_skip)]
-// named!(words<&[u8], &[u8]>,
-//        take_while!(not_a_delim)
-// );
 
 fn not_a_delim(chr: u8) -> bool {
     if chr == '|' as u8 || chr == ']' as u8 {
